@@ -54,7 +54,7 @@ export function Gate({ data }: { data: Snapshot }) {
             </div>
             <div className="orbit-divider" />
             <span className="schedule-line">
-              <CalendarDays size={17} /> 7 days · 3 days · Tomorrow · Today
+              <CalendarDays size={17} /> 7 days · 3 days · Tomorrow · 1 hr left · Today
             </span>
             <span className="schedule-line">
               <Bell size={17} /> In-app + Google Calendar

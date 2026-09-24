@@ -165,7 +165,7 @@ it("creates Calendar events once and skips unchanged successfully synced events"
   expect(inserts[0].body.id).toBe(calendarEventId("deadline", "user", 1));
   expect(
     inserts[0].body.reminders.overrides.map((x: any) => x.minutes),
-  ).toEqual([10080, 4320, 1440, 0]);
+  ).toEqual([10080, 4320, 1440, 60, 0]);
   expect(fixture.tables.calendar_events[0].synced_revision).toBe(1);
 });
 it("updates a changed deadline in place without creating a duplicate", async () => {

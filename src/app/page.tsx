@@ -102,7 +102,7 @@ export default async function Dashboard() {
             with their assignee.
           </p>
           <div className="reminder-stages">
-            {["7 days", "3 days", "1 day", "Today"].map((t) => (
+            {["7 days", "3 days", "1 day", "1 hour", "Today"].map((t) => (
               <span key={t}>{t}</span>
             ))}
           </div>

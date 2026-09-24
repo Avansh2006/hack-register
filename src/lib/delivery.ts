@@ -199,7 +199,7 @@ async function syncCalendars(stopAt: number) {
           end: { date: end.toISOString().slice(0, 10) },
           reminders: {
             useDefault: false,
-            overrides: [10080, 4320, 1440, 0].map((minutes) => ({
+            overrides: [10080, 4320, 1440, 60, 0].map((minutes) => ({
               method: "popup",
               minutes,
             })),

@@ -224,10 +224,10 @@ create function public.notification_eligible(nid uuid) returns boolean language 
  select coalesce((select u.active and not h.archived and
   (case when n.deadline_id is not null then
    d.revision=n.revision and (n.stage='completed' or d.completed_at is null) and
-   (n.stage in ('changed','completed') or n.stage=case when d.due_date<(now() at time zone h.timezone)::date then 'overdue' else (d.due_date-(now() at time zone h.timezone)::date)::text end) and
-   (exists(select 1 from public.hackathon_members m where m.hackathon_id=h.id and m.user_id=u.id and m.active) or (n.stage in ('1','0','overdue') and u.role='admin' and p.admin_critical))
+   (n.stage in ('changed','completed','1hr') or n.stage=case when d.due_date<(now() at time zone h.timezone)::date then 'overdue' else (d.due_date-(now() at time zone h.timezone)::date)::text end) and
+   (exists(select 1 from public.hackathon_members m where m.hackathon_id=h.id and m.user_id=u.id and m.active) or (n.stage in ('1','0','1hr','overdue') and u.role='admin' and p.admin_critical))
   else t.assigned_to=u.id and t.revision=n.revision and t.completed_at is null and
-   (n.stage='assigned' or n.stage=case when t.due_date<(now() at time zone h.timezone)::date then 'overdue' else (t.due_date-(now() at time zone h.timezone)::date)::text end) and
+   (n.stage in ('assigned','1hr') or n.stage=case when t.due_date<(now() at time zone h.timezone)::date then 'overdue' else (t.due_date-(now() at time zone h.timezone)::date)::text end) and
    exists(select 1 from public.hackathon_members m where m.hackathon_id=h.id and m.user_id=u.id and m.active) end)
  from public.notifications n join public.users u on u.id=n.user_id join public.notification_preferences p on p.user_id=u.id
  join public.hackathons h on h.id=n.hackathon_id left join public.deadlines d on d.id=n.deadline_id left join public.tasks t on t.id=n.task_id where n.id=nid),false)
@@ -244,11 +244,15 @@ begin
    suffix := case when days<0 then ' is overdue' when days=0 then ' TODAY' when days=1 then ' tomorrow' else ' in '||days||' days' end;
    perform public.emit_deadline(r.id,stage,(case when days<=1 then '🔴 ' else '🔔 ' end)||r.name||' — '||r.kind||case when r.kind in ('PPT','Prototype') then ' submission' else '' end||suffix,days<=1);
   end if;
+  if days=0 and extract(hour from (at_time at time zone r.timezone)) = 23 then
+   perform public.emit_deadline(r.id,'1hr','🚨 '||r.name||' — '||r.kind||case when r.kind in ('PPT','Prototype') then ' submission' else '' end||' — 1 HOUR LEFT!',true);
+  end if;
  end loop;
  for r in select t.*,h.name,h.timezone from public.tasks t join public.hackathons h on h.id=t.hackathon_id where t.completed_at is null and not h.archived loop
   days := r.due_date-(at_time at time zone r.timezone)::date;
   stage := case when days<0 then 'overdue' when days in (1,0) then days::text end;
   if stage is not null then perform public.emit_task(r.id,stage,'🔔 '||r.title||case when days<0 then ' is overdue' when days=0 then ' is due TODAY' else ' is due tomorrow' end||' — '||r.name); end if;
+  if days=0 and extract(hour from (at_time at time zone r.timezone)) = 23 then perform public.emit_task(r.id,'1hr','🚨 '||r.title||' — 1 HOUR LEFT! — '||r.name); end if;
  end loop;
  update public.notifications n set email_status='cancelled' where email_status in ('pending','sending') and not public.notification_eligible(n.id);
  return (select count(*)::integer-before_count from public.notifications);
