@@ -14,3 +14,6 @@
 
 # Netlify automatically applies its OpenNext adapter for Next.js.
 # Configure secrets in Netlify's environment settings, never in this file.
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
